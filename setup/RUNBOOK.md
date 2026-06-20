@@ -16,16 +16,16 @@ dotnet tool install --global dotnet-ef
 
 ---
 
-## Mỗi lần bắt đầu làm việc (toàn bộ dự án đã xong)
+## Mỗi lần bắt đầu làm việc
 
 ```powershell
 # Terminal 1 — Backend
-cd E:\DoAn\TraVinhUniversity\Courses\ASP_NET\EMusic
+cd ../src
 docker compose up -d
 dotnet run --project MusicApp.API
 
 # Terminal 2 — Frontend
-cd E:\DoAn\TraVinhUniversity\Courses\ASP_NET\EMusic\music-frontend
+cd ../src/music-frontend
 npm run dev
 ```
 
@@ -116,29 +116,29 @@ src/app/
 ### Demo Script — Test toàn bộ hệ thống
 ```
 1. Vào http://localhost:3000
-   → Browse bài hát → Nhấn play → Âm thanh phát trong trình duyệt ✓
+   → Browse bài hát → Nhấn play → Âm thanh phát trong trình duyệt 
 
-2. Chuyển sang /songs → PlayerBar vẫn hiển thị, nhạc tiếp tục phát ✓
-   → Tìm kiếm bài hát → kết quả cập nhật theo debounce 300ms ✓
+2. Chuyển sang /songs → PlayerBar vẫn hiển thị, nhạc tiếp tục phát 
+   → Tìm kiếm bài hát → kết quả cập nhật theo debounce 300ms 
 
 3. Login bằng hieuviet.1103@gmail.com / User@12345
    → /playlists → Tạo playlist "Nhạc Yêu Thích"
    → Vào /songs, thêm bài vào playlist
-   → Quay lại /playlists → thấy bài đã thêm ✓
+   → Quay lại /playlists → thấy bài đã thêm 
 
 4. /upload → Upload .mp3
-   → Status hiển thị "Đang chờ duyệt" (role User) ✓
+   → Status hiển thị "Đang chờ duyệt" (role User) 
 
 5. Logout → Login bằng 170124891@rdi.edu.vn / Admin@12345
-   → /admin → Thấy thống kê ✓
+   → /admin → Thấy thống kê 
    → /admin/pending → Thấy bài chờ duyệt
    → Nhấn "Duyệt"
    → Nhấn "Từ chối"
 
-6. /upload với admin → Upload .mp3 → Status "Đã đăng" ngay ✓
+6. /upload với admin → Upload .mp3 → Status "Đã đăng" ngay 
 
 7. Logout → Login bằng hieuviet.itc@gmail.com / Pro@12345
-   → /upload → Upload .mp3 → Status "Đã đăng" ngay ✓
+   → /upload → Upload .mp3 → Status "Đã đăng" ngay 
 ```
 
 ---
