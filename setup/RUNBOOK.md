@@ -20,12 +20,16 @@ dotnet tool install --global dotnet-ef
 
 ```powershell
 # Terminal 1 — Backend
-cd ../src
+cd ./src
 docker compose up -d
 dotnet run --project MusicApp.API
 
 # Terminal 2 — Frontend
-cd ../src/music-frontend
+cd ./src/music-frontend
+# cài đặt các thư viện cần thiết
+npm install
+
+#chạy giao diện môi trường dev
 npm run dev
 ```
 
