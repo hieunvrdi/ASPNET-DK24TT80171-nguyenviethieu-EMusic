@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import type { Song } from "@/types";
+import { updateMediaSession, setMediaSessionHandlers } from "@/lib/mediaSession";
 
 // Module-level Audio element — NOT React state (prevents re-renders)
 let audio: HTMLAudioElement | null = null;
@@ -95,13 +96,24 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     const a = getAudio();
 
     a.ontimeupdate = () => {
-      set({ currentTime: a.currentTime });
-      const { currentSong } = get();
-      if (currentSong) tickPlayTracking(currentSong.id);
+      const currentTime = a.currentTime;
+      set({ currentTime });
+      const { currentSong, duration } = get();
+      if (currentSong) {
+        tickPlayTracking(currentSong.id);
+        // Update media session position state
+        updateMediaSession(currentSong, true, currentTime, duration);
+      }
     };
 
-    a.ondurationchange = () =>
-      set({ duration: isFinite(a.duration) ? a.duration : 0 });
+    a.ondurationchange = () => {
+      const duration = isFinite(a.duration) ? a.duration : 0;
+      set({ duration });
+      const { currentSong, isPlaying } = get();
+      if (currentSong) {
+        updateMediaSession(currentSong, isPlaying, a.currentTime, duration);
+      }
+    };
 
     a.onended = () => {
       const { repeatMode } = get();
@@ -113,8 +125,33 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
       }
     };
 
-    a.onplay  = () => { set({ isPlaying: true }); };
-    a.onpause = () => { set({ isPlaying: false }); };
+    a.onplay  = () => {
+      set({ isPlaying: true });
+      const { currentSong, currentTime, duration } = get();
+      updateMediaSession(currentSong, true, currentTime, duration);
+    };
+    a.onpause = () => {
+      set({ isPlaying: false });
+      const { currentSong, currentTime, duration } = get();
+      updateMediaSession(currentSong, false, currentTime, duration);
+    };
+
+    // Set up Media Session API handlers
+    setMediaSessionHandlers({
+      play: () => get().resume(),
+      pause: () => get().pause(),
+      nexttrack: () => get().next(),
+      previoustrack: () => get().prev(),
+      seek: (time) => get().seek(time),
+      seekforward: (seconds = 10) => {
+        const { currentTime, duration } = get();
+        get().seek(Math.min(currentTime + seconds, duration));
+      },
+      seekbackward: (seconds = 10) => {
+        const { currentTime } = get();
+        get().seek(Math.max(currentTime - seconds, 0));
+      },
+    });
   }
 
   return {
@@ -150,6 +187,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
         isPlaying: true,
         currentTime: 0,
       });
+
+      // Update Media Session metadata, position, and controls
+      updateMediaSession(song, true, 0, 0);
     },
 
     addToQueue: (song: Song) => {

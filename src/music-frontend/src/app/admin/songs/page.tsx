@@ -753,9 +753,10 @@ export default function AdminSongsPage() {
 
       {/* Table */}
       <div className="bg-sp-surface rounded-lg overflow-x-auto">
-        <div className="min-w-[720px]">
-        <div className="grid grid-cols-[40px_1fr_140px_80px_100px_120px_160px] gap-3 px-4 py-2 text-xs text-sp-silver uppercase tracking-widest border-b border-sp-border">
+        <div className="min-w-[900px]">
+        <div className="grid grid-cols-[40px_60px_1fr_140px_80px_100px_120px_160px] gap-3 px-4 py-2 text-xs text-sp-silver uppercase tracking-widest border-b border-sp-border">
           <span>#</span>
+          <span>Ảnh</span>
           <span>Tiêu đề / Nghệ sĩ</span>
           <span>Người upload</span>
           <span className="text-right">Thời lượng</span>
@@ -772,12 +773,26 @@ export default function AdminSongsPage() {
           songs.map((song, i) => (
             <div
               key={song.id}
-              className="grid grid-cols-[40px_1fr_140px_80px_100px_120px_160px] gap-3 px-4 py-3 items-center border-b border-sp-border/50 hover:bg-sp-mid/30 transition-colors"
+              className="grid grid-cols-[40px_60px_1fr_140px_80px_100px_120px_160px] gap-3 px-4 py-3 items-center border-b border-sp-border/50 hover:bg-sp-mid/30 transition-colors"
             >
               {/* # */}
               <span className="text-sp-silver text-sm">
                 {(page - 1) * pageSize + i + 1}
               </span>
+
+              {/* Cover Image */}
+              <div className="w-12 h-12 rounded bg-sp-mid flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {song.coverUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={mediaUrl(song.coverUrl)}
+                    alt={song.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-lg">🎵</span>
+                )}
+              </div>
 
               {/* Title + Artist */}
               <div className="min-w-0">

@@ -9,12 +9,6 @@ import { useContextMenuStore } from "@/store/contextMenuStore";
 import FavoriteButton from "@/components/song/FavoriteButton";
 import type { Artist, Song, ApiResponse, PagedResult } from "@/types";
 
-function fmt(sec: number) {
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
 export default function ArtistDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router  = useRouter();
@@ -24,7 +18,9 @@ export default function ArtistDetailPage() {
   const [total, setTotal]     = useState(0);
   const [page, setPage]       = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   const pageSize = 20;
   const { play, currentSong, isPlaying, togglePlay } = usePlayerStore();
@@ -38,20 +34,35 @@ export default function ArtistDetailPage() {
       .catch(() => setNotFound(true));
   }, [id]);
 
-  // Load songs (paginated)
+  // Load songs (with load more)
   useEffect(() => {
-    setLoading(true);
+    const isLoadMore = page > 1;
+    if (isLoadMore) setLoadingMore(true);
+    else setLoading(true);
+
     api
       .get<PagedResult<Song>>(`/api/artists/${id}/songs?page=${page}&pageSize=${pageSize}`)
-      .then((r) => { setSongs(r.data.data); setTotal(r.data.total); })
+      .then((r) => {
+        if (isLoadMore) {
+          setSongs((prev) => [...prev, ...r.data.data]);
+        } else {
+          setSongs(r.data.data);
+        }
+        setTotal(r.data.total);
+      })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (isLoadMore) setLoadingMore(false);
+        else setLoading(false);
+      });
   }, [id, page]);
 
   const handlePlay = (song: Song) => {
     if (currentSong?.id === song.id) togglePlay();
     else play(song, songs);
   };
+
+  const hasMore = songs.length < total;
 
   if (notFound) {
     return (
@@ -68,7 +79,6 @@ export default function ArtistDetailPage() {
     );
   }
 
-  const totalPages = Math.ceil(total / pageSize);
 
   return (
     <div>
@@ -116,77 +126,173 @@ export default function ArtistDetailPage() {
           </button>
         )}
 
-        {/* Songs table */}
-        <h2 className="text-white font-bold text-lg mb-3">Bài hát</h2>
+        {/* Songs */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-white font-bold text-lg">Bài hát</h2>
+          {songs.length > 0 && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => setViewMode("list")}
+                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                  viewMode === "list"
+                    ? "bg-sp-green text-sp-black"
+                    : "bg-sp-mid text-sp-silver hover:text-white"
+                }`}
+                title="Dạng danh sách"
+              >
+                ☰
+              </button>
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                  viewMode === "grid"
+                    ? "bg-sp-green text-sp-black"
+                    : "bg-sp-mid text-sp-silver hover:text-white"
+                }`}
+                title="Dạng lưới"
+              >
+                ⊞
+              </button>
+            </div>
+          )}
+        </div>
 
         {loading ? (
-          <div className="space-y-2">
+          <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" : "space-y-2"}>
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-14 bg-sp-mid rounded animate-pulse" />
+              <div key={i} className={viewMode === "grid" ? "bg-sp-mid rounded-lg h-64 animate-pulse" : "h-16 bg-sp-mid rounded animate-pulse"} />
             ))}
           </div>
         ) : songs.length === 0 ? (
           <p className="text-sp-silver text-sm">Nghệ sĩ này chưa có bài hát nào.</p>
-        ) : (
+        ) : viewMode === "grid" ? (
+          // Grid view (cards)
           <>
-            <div className="bg-sp-surface rounded-lg overflow-hidden">
-              <div className="grid grid-cols-[auto_1fr_1fr_36px_80px] gap-4 px-4 py-2 text-xs text-sp-silver uppercase tracking-widest border-b border-sp-border">
-                <span className="w-8 text-center">#</span>
-                <span>Tiêu đề</span>
-                <span>Album</span>
-                <span />
-                <span className="text-right">Thời lượng</span>
-              </div>
-
-              {songs.map((song, i) => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {songs.map((song) => {
                 const isActive = currentSong?.id === song.id;
                 return (
                   <div
                     key={song.id}
                     onClick={() => handlePlay(song)}
                     onContextMenu={(e) => { e.preventDefault(); openMenu(song, songs, e.clientX, e.clientY); }}
-                    className={`grid grid-cols-[auto_1fr_1fr_36px_80px] gap-4 px-4 py-3 items-center cursor-pointer group transition-colors hover:bg-sp-mid ${
-                      isActive ? "bg-sp-mid/50" : ""
-                    }`}
+                    className="group cursor-pointer"
                   >
-                    <div className="w-8 text-center text-sp-silver text-sm">
-                      {isActive && isPlaying ? (
-                        <span className="text-sp-green text-xs">▶</span>
+                    <div className={`relative rounded-lg overflow-hidden mb-3 aspect-square bg-sp-mid flex items-center justify-center transition-all ${
+                      isActive ? "ring-2 ring-sp-green" : ""
+                    } group-hover:ring-2 group-hover:ring-sp-green/50`}>
+                      {song.coverUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={mediaUrl(song.coverUrl)}
+                          alt={song.title}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
-                        <>
-                          <span className="group-hover:hidden">{(page - 1) * pageSize + i + 1}</span>
-                          <span className="hidden group-hover:inline text-white">▶</span>
-                        </>
+                        <span className="text-5xl">🎵</span>
                       )}
+
+                      {/* Play button overlay */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span className={`text-4xl ${isActive && isPlaying ? "text-sp-green" : "text-white"}`}>
+                          {isActive && isPlaying ? "⏸" : "▶"}
+                        </span>
+                      </div>
+
+                      {/* Heart button */}
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <FavoriteButton songId={song.id} className="text-xl" />
+                      </div>
                     </div>
-                    <p className={`text-sm font-bold truncate ${isActive ? "text-sp-green" : "text-white"}`}>
+
+                    <p className={`text-sm font-bold truncate line-clamp-2 ${isActive ? "text-sp-green" : "text-white"}`}>
                       {song.title}
                     </p>
-                    <p className="text-sm text-sp-silver truncate">{song.albumTitle ?? "—"}</p>
-
-                    {/* Heart */}
-                    <FavoriteButton songId={song.id} className="text-base" />
-
-                    <p className="text-sm text-sp-silver text-right">{fmt(song.durationSeconds)}</p>
                   </div>
                 );
               })}
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-6">
+            {/* Load More Button */}
+            {hasMore && (
+              <div className="flex justify-center mt-8">
                 <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="px-4 py-1.5 rounded-pill bg-sp-mid text-white text-sm disabled:opacity-40 hover:bg-sp-card transition-colors"
-                >‹</button>
-                <span className="text-sp-silver text-sm">{page} / {totalPages}</span>
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={loadingMore}
+                  className="px-6 py-2.5 rounded-pill bg-sp-green text-sp-black text-sm font-bold hover:brightness-110 transition-all disabled:opacity-50"
+                >
+                  {loadingMore ? "Đang tải..." : "Tải thêm"}
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          // List view
+          <>
+            <div className="bg-sp-surface rounded-lg overflow-hidden">
+              {songs.map((song) => {
+                const isActive = currentSong?.id === song.id;
+                return (
+                  <div
+                    key={song.id}
+                    onClick={() => handlePlay(song)}
+                    onContextMenu={(e) => { e.preventDefault(); openMenu(song, songs, e.clientX, e.clientY); }}
+                    className={`flex items-center gap-3 px-4 py-3 group cursor-pointer transition-colors hover:bg-sp-mid/50 border-b border-sp-border/50 last:border-0 ${
+                      isActive ? "bg-sp-mid/30" : ""
+                    }`}
+                  >
+                    {/* Cover thumbnail */}
+                    <div className={`w-12 h-12 rounded flex-shrink-0 bg-sp-mid flex items-center justify-center overflow-hidden transition-all ${
+                      isActive ? "ring-2 ring-sp-green" : ""
+                    }`}>
+                      {song.coverUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={mediaUrl(song.coverUrl)}
+                          alt={song.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-lg">🎵</span>
+                      )}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-bold truncate ${isActive ? "text-sp-green" : "text-white"}`}>
+                        {song.title}
+                      </p>
+                      {song.albumTitle && (
+                        <p className="text-xs text-sp-silver truncate">{song.albumTitle}</p>
+                      )}
+                    </div>
+
+                    {/* Play icon */}
+                    <div className="flex-shrink-0 text-sp-silver group-hover:text-white transition-colors">
+                      {isActive && isPlaying ? (
+                        <span className="text-sp-green">⏸</span>
+                      ) : (
+                        <span className="opacity-0 group-hover:opacity-100">▶</span>
+                      )}
+                    </div>
+
+                    {/* Heart */}
+                    <FavoriteButton songId={song.id} className="text-base flex-shrink-0" />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Load More Button */}
+            {hasMore && (
+              <div className="flex justify-center mt-6">
                 <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className="px-4 py-1.5 rounded-pill bg-sp-mid text-white text-sm disabled:opacity-40 hover:bg-sp-card transition-colors"
-                >›</button>
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={loadingMore}
+                  className="px-6 py-2.5 rounded-pill bg-sp-green text-sp-black text-sm font-bold hover:brightness-110 transition-all disabled:opacity-50"
+                >
+                  {loadingMore ? "Đang tải..." : "Tải thêm"}
+                </button>
               </div>
             )}
           </>

@@ -11,12 +11,16 @@ const navItems = [
   { href: "/playlists", label: "Playlist",  icon: "📋" },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+export default function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user, isAdmin } = useAuthStore();
 
   return (
-    <aside className="hidden md:flex w-60 bg-sp-black flex-col flex-shrink-0 h-full overflow-hidden">
+    <aside className="w-60 bg-sp-black flex flex-col flex-shrink-0 h-full overflow-hidden">
       {/* Logo */}
       <div className="px-6 py-6">
         <Link href="/" className="flex items-center gap-2">
@@ -35,6 +39,7 @@ export default function Sidebar() {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  onClick={onClose}
                   className={`flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors ${
                     active ? "text-white font-bold" : "text-sp-silver hover:text-white font-normal"
                   }`}
@@ -54,6 +59,7 @@ export default function Sidebar() {
               <li>
                 <Link
                   href="/favorites"
+                  onClick={onClose}
                   className={`flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors ${
                     pathname === "/favorites" ? "text-white font-bold" : "text-sp-silver hover:text-white"
                   }`}
@@ -64,6 +70,7 @@ export default function Sidebar() {
               <li>
                 <Link
                   href="/my-uploads"
+                  onClick={onClose}
                   className={`flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors ${
                     pathname === "/my-uploads" ? "text-white font-bold" : "text-sp-silver hover:text-white"
                   }`}
@@ -75,6 +82,7 @@ export default function Sidebar() {
                 <li>
                   <Link
                     href="/admin"
+                    onClick={onClose}
                     className={`flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors ${
                       pathname.startsWith("/admin") ? "text-sp-green font-bold" : "text-sp-silver hover:text-white"
                     }`}
