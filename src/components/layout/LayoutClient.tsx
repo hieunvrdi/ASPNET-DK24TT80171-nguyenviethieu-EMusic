@@ -6,6 +6,7 @@ import Topbar from "./Topbar";
 import BottomNav from "./BottomNav";
 import SongContextMenu from "@/components/song/SongContextMenu";
 import PlayerShell from "@/components/player/PlayerShell";
+import LoadingBar from "@/components/ui/LoadingBar";
 
 interface LayoutClientProps {
   children: React.ReactNode;
@@ -16,6 +17,8 @@ export default function LayoutClient({ children }: LayoutClientProps) {
 
   return (
     <div className="flex flex-col h-screen">
+      <LoadingBar />
+
       {/* Main area */}
       <div className="flex flex-1 min-h-0">
         {/* Sidebar — desktop */}

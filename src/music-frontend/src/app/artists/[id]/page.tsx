@@ -7,6 +7,7 @@ import { mediaUrl } from "@/lib/media";
 import { usePlayerStore } from "@/store/playerStore";
 import { useContextMenuStore } from "@/store/contextMenuStore";
 import FavoriteButton from "@/components/song/FavoriteButton";
+import { SongSkeleton, SongCardSkeleton, ArtistHeroSkeleton } from "@/components/ui/Skeleton";
 import type { Artist, Song, ApiResponse, PagedResult } from "@/types";
 
 export default function ArtistDetailPage() {
@@ -158,11 +159,19 @@ export default function ArtistDetailPage() {
         </div>
 
         {loading ? (
-          <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" : "space-y-2"}>
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className={viewMode === "grid" ? "bg-sp-mid rounded-lg h-64 animate-pulse" : "h-16 bg-sp-mid rounded animate-pulse"} />
-            ))}
-          </div>
+          viewMode === "grid" ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <SongCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <SongSkeleton key={i} />
+              ))}
+            </div>
+          )
         ) : songs.length === 0 ? (
           <p className="text-sp-silver text-sm">Nghệ sĩ này chưa có bài hát nào.</p>
         ) : viewMode === "grid" ? (

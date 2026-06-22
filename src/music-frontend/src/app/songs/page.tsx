@@ -8,6 +8,7 @@ import { usePlayerStore } from "@/store/playerStore";
 import { useContextMenuStore } from "@/store/contextMenuStore";
 import FavoriteButton from "@/components/song/FavoriteButton";
 import { songArtistsLabel } from "@/lib/artists";
+import { SongSkeleton, SongCardSkeleton } from "@/components/ui/Skeleton";
 import type { Song, PagedResult } from "@/types";
 
 function fmt(sec: number) {
@@ -123,11 +124,19 @@ export default function SongsPage() {
 
       {/* Song list/grid */}
       {loading ? (
-        <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" : "bg-sp-surface rounded-lg"}>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className={viewMode === "grid" ? "bg-sp-mid rounded-lg h-64 animate-pulse" : "h-14 bg-sp-mid/50 border-b border-sp-border/50"} />
-          ))}
-        </div>
+        viewMode === "grid" ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <SongCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <SongSkeleton key={i} />
+            ))}
+          </div>
+        )
       ) : songs.length === 0 ? (
         <div className="p-8 text-center text-sp-silver text-sm bg-sp-surface rounded-lg">Không tìm thấy bài hát nào.</div>
       ) : viewMode === "grid" ? (
