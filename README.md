@@ -1,4 +1,4 @@
-# EMusic — Runbook từng Phase
+# EMusic — Website nghe nhạc trực tuyến
 
 ## Yêu cầu môi trường (cài một lần)
 
